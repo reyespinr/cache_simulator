@@ -4,6 +4,22 @@ from cache import Cache
 
 
 def main():
+    """
+    Main function to run the cache simulator.
+
+    This function parses command-line arguments, sets up the cache configuration, and processes memory addresses
+    to calculate cache hit and miss rates.
+
+    Command-line Arguments:
+    --block_size: Block size in bytes (default: 32)
+    --num_blocks: Number of blocks in the cache (default: 128)
+    --associativity: Cache associativity (default: 1)
+    --replacement_policy: Cache replacement policy (default: 'LRU', choices: ['LRU', 'Random'])
+    --address_file: Path to the file with memory addresses
+
+    Returns:
+    None
+    """
     # Parsing command line arguments
     parser = argparse.ArgumentParser(description='Cache Simulator')
     parser.add_argument('--block_size', type=int,

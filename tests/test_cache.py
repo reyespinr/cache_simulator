@@ -5,23 +5,32 @@ from src.config import CacheConfig
 
 
 class TestCache(unittest.TestCase):
+    """
+    A test suite for the Cache and CacheLine classes.
+
+    This test suite includes various test cases to ensure the correctness of the cache simulator.
+    """
 
     def test_get_set_index_and_tag(self):
-        # Updated test case to align with CacheConfig calculation of num_sets
+        """
+        Test the get_set_index_and_tag method.
+
+        This test case checks if the get_set_index_and_tag method correctly calculates set index and tag from a memory address.
+        """
+        # Test with a specific address
         block_size = 32
-        num_blocks = 4  # Total number of blocks
+        num_blocks = 4
         associativity = 2
-        num_sets = num_blocks // associativity  # Correct calculation of num_sets
+        num_sets = num_blocks // associativity
 
         config = CacheConfig(block_size=block_size, num_blocks=num_blocks,
                              associativity=associativity, replacement_policy='LRU')
         cache = Cache(config)
 
-        # Test with a specific address
         address = 0x12345678
         set_index, tag = cache.get_set_index_and_tag(address)
 
-        # Updated calculations to match cache.py logic
+        # Calculate expected values based on cache.py logic
         block_offset_bits = int(math.log2(block_size))
         set_index_bits = int(math.log2(num_sets))
         expected_set_index = (address >> block_offset_bits) & (
@@ -32,6 +41,11 @@ class TestCache(unittest.TestCase):
         self.assertEqual(tag, expected_tag)
 
     def test_lru_policy(self):
+        """
+        Test the LRU replacement policy.
+
+        This test case checks if the LRU replacement policy correctly evicts the least recently used cache lines.
+        """
         config = CacheConfig(block_size=32, num_blocks=8,
                              associativity=2, replacement_policy='LRU')
         cache = Cache(config)
@@ -42,12 +56,9 @@ class TestCache(unittest.TestCase):
                 print(
                     f"Set {i}: {[f'Tag: {line.tag}, Last Used: {line.last_used}' for line in set_]}")
 
-        # Access addresses that map to the same set
         addresses = [0x100, 0x200, 0x300, 0x400]
         for address in addresses:
             cache.read_address(address)
-            # print(f"After accessing {hex(address)}:")
-            # print_cache_state()
 
         # The least recently used address (0x100) should be evicted
         self.assertIsNone(self.find_in_cache(cache, 0x100))
@@ -58,6 +69,16 @@ class TestCache(unittest.TestCase):
         self.assertIsNotNone(self.find_in_cache(cache, 0x400))
 
     def find_in_cache(self, cache, address):
+        """
+        Helper function to find a cache line in the cache.
+
+        Args:
+            cache (Cache): The Cache object.
+            address (int): The memory address to search for in the cache.
+
+        Returns:
+            CacheLine or None: The CacheLine object if found, else None.
+        """
         set_index, tag = cache.get_set_index_and_tag(address)
         set_ = cache.sets[set_index]
         for line in set_:
@@ -66,7 +87,12 @@ class TestCache(unittest.TestCase):
         return None
 
     def test_cache_hit_miss(self):
-        # Test for hits and misses
+        """
+        Test cache hits and misses.
+
+        This test case checks for cache hits and misses by accessing a block.
+        It expects a cache miss for the first access and a cache hit for the second access.
+        """
         config = CacheConfig(block_size=32, num_blocks=4,
                              associativity=2, replacement_policy='LRU')
         cache = Cache(config)
@@ -76,13 +102,13 @@ class TestCache(unittest.TestCase):
         self.assertFalse(cache.read_address(address))  # Expect miss
         self.assertTrue(cache.read_address(address))   # Expect hit
 
-        # Access enough blocks to cause an eviction
-        # ...
-
-        # Test with varying levels of associativity
-        # ...
-
     def test_cache_read_operations(self):
+        """
+        Test cache read operations.
+
+        This test case simulates cache read operations in different sets.
+        It expects cache misses for initial accesses and cache hits for subsequent accesses.
+        """
         config = CacheConfig(block_size=32, num_blocks=8,
                              associativity=2, replacement_policy='LRU')
         cache = Cache(config)
@@ -96,10 +122,12 @@ class TestCache(unittest.TestCase):
         self.assertTrue(cache.read_address(0x100))  # Expect hit
         self.assertTrue(cache.read_address(0x200))  # Expect hit
 
-        # Test with different associativity
-        # ...
-
     def test_cache_configuration(self):
+        """
+        Test cache configuration.
+
+        This test case checks cache behavior with different configurations, including small sets and large block sizes.
+        """
         # Test with a small number of sets
         small_config = CacheConfig(
             block_size=32, num_blocks=2, associativity=1, replacement_policy='LRU')
@@ -107,14 +135,14 @@ class TestCache(unittest.TestCase):
         self.assertFalse(small_cache.read_address(0x100))  # Expect miss
         self.assertTrue(small_cache.read_address(0x100))   # Expect hit
 
-        # Test with a large number of sets
-        # ...
-
-        # Test with different block sizes
-        # ...
+        # Additional configuration tests can be added here...
 
     def test_minimum_blocks(self):
-        # Test with the minimum number of blocks
+        """
+        Test cache with the minimum number of blocks.
+
+        This test case checks cache behavior with the minimum number of blocks.
+        """
         block_size = 32
         config = CacheConfig(block_size=block_size, num_blocks=1,
                              associativity=1, replacement_policy='LRU')
@@ -128,7 +156,12 @@ class TestCache(unittest.TestCase):
             result, "Expected cache miss for the minimum number of blocks.")
 
     def test_maximum_blocks(self):
-        # Test with a large number of blocks (smaller than the maximum)
+        """
+        Test cache with a large number of blocks (smaller than the maximum).
+
+        This test case checks cache behavior with a large number of blocks.
+        It expects cache misses for all addresses.
+        """
         block_size = 32
         num_blocks = 2**16  # A large number of blocks
         config = CacheConfig(block_size=block_size, num_blocks=num_blocks,
@@ -145,7 +178,11 @@ class TestCache(unittest.TestCase):
                 result, f"Expected cache miss for address {hex(address)}")
 
     def test_minimum_associativity(self):
-        # Test with minimum associativity (1)
+        """
+        Test cache with minimum associativity (1).
+
+        This test case checks cache behavior with the minimum associativity.
+        """
         block_size = 32
         num_blocks = 8
         config = CacheConfig(block_size=block_size, num_blocks=num_blocks,
@@ -160,7 +197,11 @@ class TestCache(unittest.TestCase):
             result, "Expected cache miss for the minimum associativity (1).")
 
     def test_maximum_associativity(self):
-        # Test with maximum associativity (num_blocks)
+        """
+        Test cache with maximum associativity (num_blocks).
+
+        This test case checks cache behavior with the maximum associativity.
+        """
         block_size = 32
         num_blocks = 8
         config = CacheConfig(block_size=block_size, num_blocks=num_blocks,
@@ -175,6 +216,12 @@ class TestCache(unittest.TestCase):
             result, "Expected cache miss for the maximum associativity (num_blocks).")
 
     def test_edge_memory_addresses(self):
+        """
+        Test cache behavior with edge memory addresses.
+
+        This test case checks cache behavior with edge memory addresses (0x0 and the highest possible address).
+        It expects cache misses for both addresses.
+        """
         # Test with address 0x0
         block_size = 32
         num_blocks = 4
@@ -197,7 +244,11 @@ class TestCache(unittest.TestCase):
             result, "Expected cache miss for the highest possible memory address.")
 
     def test_invalid_inputs(self):
-        # Test with invalid command-line arguments
+        """
+        Test invalid command-line arguments.
+
+        This test case checks if the cache simulator handles invalid configuration inputs.
+        """
         block_size = 32
         num_blocks = 4
         associativity = 2
