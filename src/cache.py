@@ -10,8 +10,17 @@ class CacheLine:
 
 
 class Cache:
+    # Valid replacement policies
+    VALID_REPLACEMENT_POLICIES = ['LRU', 'RANDOM']
+
     def __init__(self, config):
         self.config = config
+
+        # Check if the provided replacement policy is valid
+        if config.replacement_policy not in self.VALID_REPLACEMENT_POLICIES:
+            raise ValueError(
+                "Invalid configuration: replacement_policy must be 'LRU' or 'RANDOM'")
+
         self.sets = [[CacheLine() for _ in range(config.associativity)]
                      for _ in range(config.num_sets)]
         self.access_counter = 0  # Used for LRU tracking
@@ -19,11 +28,12 @@ class Cache:
     def get_set_index_and_tag(self, address):
         block_offset_bits = int(math.log2(self.config.block_size))
         set_index_bits = int(math.log2(self.config.num_sets))
-        tag_bits = 32 - block_offset_bits - set_index_bits
 
         set_index = (address >> block_offset_bits) & (
             (1 << set_index_bits) - 1)
-        tag = address >> (block_offset_bits + set_index_bits)
+        tag = (address >> (block_offset_bits + set_index_bits)
+               ) & ((1 << (32 - block_offset_bits - set_index_bits)) - 1)
+
         return set_index, tag
 
     def read_address(self, address):
@@ -34,12 +44,12 @@ class Cache:
         for line in set_:
             if line.tag == tag:
                 line.last_used = self.access_counter
-                print(
-                    f"Cache Hit! Address: {hex(address)}, Set Index: {set_index}, Tag: {tag}, Last Used: {line.last_used}")
+                # print(
+                #     f"Cache Hit! Address: {hex(address)}, Set Index: {set_index}, Tag: {tag}, Last Used: {line.last_used}")
                 return True
 
-        print(
-            f"Cache Miss! Address: {hex(address)}, Set Index: {set_index}, Tag: {tag}")
+        # print(
+        #     f"Cache Miss! Address: {hex(address)}, Set Index: {set_index}, Tag: {tag}")
         self.handle_miss(set_index, tag)
         return False
 
